@@ -49,7 +49,7 @@ def train(replay_buffer):
     model.fit(x=observation.reshape(1, 4), y=q_bellman)
 
 
-def main(amount_of_episodes, initial_exploration, final_exploration, percentage, decay_constant):
+def main(amount_of_episodes, initial_exploration, final_exploration, decay_constant):
     episode_lengths = []
     replay_buffer = deque(maxlen=10000)
     current_episode_length = 0
@@ -58,8 +58,7 @@ def main(amount_of_episodes, initial_exploration, final_exploration, percentage,
     for episode in range(amount_of_episodes):
         terminated, truncated = False, False
         # annealing, done before the while loop because the first episode equals 0 so it returns the original epsilon back
-        exploration_parameter = exponential_anneal(episode, amount_of_episodes, initial_exploration, final_exploration,
-                                                   percentage, decay_constant)
+        exploration_parameter = exponential_anneal(episode, initial_exploration, final_exploration, decay_constant)
         epsilon = exploration_parameter  # temporary while only using egreedy
         while not terminated and not truncated:
             current_episode_length += 1
@@ -103,10 +102,9 @@ gamma = 1  # discount factor
 initial_epsilon = 1 # 100%
 final_epsilon = 0.01 # 1%
 amount_of_episodes = 10
-percentage = 1 # percentage after which the annealing should finish
 decay_constant = 0.01 # the amount with which the exploration parameter changes after each episode
 
 env = gym.make('CartPole-v1', render_mode='human')
 
 model = initialize_model(learning_rate=learning_rate)
-main(amount_of_episodes=amount_of_episodes,initial_exploration=initial_epsilon,final_exploration=final_epsilon,percentage=percentage,decay_constant=decay_constant)
+main(amount_of_episodes=amount_of_episodes,initial_exploration=initial_epsilon,final_exploration=final_epsilon,decay_constant=decay_constant)
