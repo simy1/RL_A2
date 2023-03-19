@@ -1,11 +1,12 @@
-import gymnasium as gym
+# import gymnasium as gym
+import gym
 import numpy as np
 import pygame
 import tensorflow as tf
-import sys
 from collections import deque
 from helper import *
-
+import time
+import random
 
 def initialize_model(learning_rate):
     """
@@ -27,6 +28,56 @@ def initialize_model(learning_rate):
 
 
 def train(replay_buffer):
+    last_element = -1
+    terminated, truncated = replay_buffer[last_element][4], replay_buffer[last_element][5]
+
+    if not activate_ER:                    # for the baseline: just take the last element
+        sample_list = [last_element]    
+    else:                                  # for the ER: check the conditions and then take a sample
+        FREQUENCY_ER = 4 
+        MIN_SIZE_BUFFER = 1_000
+        BATCH_SIZE = 128
+
+        if len(replay_buffer) % FREQUENCY_ER != 0 and not terminated and not truncated:
+            return 
+        if len(replay_buffer) < MIN_SIZE_BUFFER:
+            return
+        
+        sample_list = random.sample(range(0,len(replay_buffer)), BATCH_SIZE)
+
+    observation_list = list()
+    new_observation_list = list()
+    action_list = list()
+    reward_list = list()
+    terminated_list = list()
+    truncated_list = list()
+    for element in sample_list:
+        observation_list.append(replay_buffer[element][0])
+        new_observation_list.append(replay_buffer[element][3])
+        action_list.append(replay_buffer[element][1])
+        reward_list.append(replay_buffer[element][2])
+        terminated_list.append(replay_buffer[element][4])
+        truncated_list.append(replay_buffer[element][5])
+
+    predicted_q_values = model.predict(np.array(observation_list))
+    new_predicted_q_values = model.predict(np.array(new_observation_list))
+    
+    q_bellman_list = list()
+    for i in range(len(observation_list)):
+        if not terminated_list[i] and not truncated_list[i]:
+            q_bellman = predicted_q_values[i] - learning_rate * (predicted_q_values[i] - reward_list[i] - gamma * max(new_predicted_q_values[i]))
+        else:
+            q_bellman = predicted_q_values[i] - learning_rate * (predicted_q_values[i] - reward_list[i])
+        q_bellman[1-action_list[i]] = predicted_q_values[i][1-action_list[i]]
+        q_bellman_list.append(q_bellman)
+    
+    if activate_ER:
+        model.fit(x=np.array(observation_list), y=np.array(q_bellman_list), batch_size=BATCH_SIZE)
+    else:
+        model.fit(x=np.array(observation_list), y=np.array(q_bellman_list))    
+
+    
+def trainOriginal(replay_buffer):
     # take the last saved episode with [-1]
     observation = replay_buffer[-1][0]
     new_observation = replay_buffer[-1][3]
@@ -51,7 +102,7 @@ def train(replay_buffer):
 
 def main(amount_of_episodes, initial_exploration, final_exploration, decay_constant):
     episode_lengths = []
-    replay_buffer = deque(maxlen=10000)
+    replay_buffer = deque(maxlen=10_000)
     current_episode_length = 0
     observation, info = env.reset()
 
@@ -97,14 +148,32 @@ def main(amount_of_episodes, initial_exploration, final_exploration, decay_const
     print('episode lengths: ', episode_lengths)
     env.close()
 
+
+start = time.time()
+
+# response = ckeckCMD()
+# if 'error' in response:
+#     printNotAcceptedCMD(response)
+#     exit()
+# activate_ER = False
+# activate_TN = False
+# if 'ER' in response:
+#     activate_ER = True
+# if 'TN' in response:
+#     activate_TN = True
+
 learning_rate = 10**(-1)
 gamma = 1  # discount factor
 initial_epsilon = 1 # 100%
 final_epsilon = 0.01 # 1%
-amount_of_episodes = 10
+amount_of_episodes = 300
 decay_constant = 0.01 # the amount with which the exploration parameter changes after each episode
+activate_ER = True
+activate_TN = False
 
 env = gym.make('CartPole-v1', render_mode='human')
-
 model = initialize_model(learning_rate=learning_rate)
 main(amount_of_episodes=amount_of_episodes,initial_exploration=initial_epsilon,final_exploration=final_epsilon,decay_constant=decay_constant)
+
+end = time.time()
+print('Total time: {} seconds (number of episodes: {})'.format(end-start,amount_of_episodes))
