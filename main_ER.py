@@ -4,11 +4,18 @@ import numpy as np
 import pygame
 import tensorflow as tf
 from collections import deque
+
+import visualize
 from helper import *
 import time
 import random
+import matplotlib.pyplot as plt
 from visualize import plot_episode_length, average_episode_length
 
+
+# next two lines can be removed after hyperparameter tuning
+update_freq_TN = 100
+gamma = 1
 
 def initialize_model(learning_rate):
     # TODO hyperparameter settings / how many nodes and layers do we need?
@@ -36,7 +43,7 @@ def update_model(base_model, target_network):
         layer_TN.set_weights(layer_BM.get_weights())
 
 
-def train(base_model, target_network, replay_buffer, activate_ER, activate_TN):
+def train(base_model, target_network, replay_buffer, activate_ER, activate_TN, learning_rate):
     last_element = -1
     terminated, truncated = replay_buffer[last_element][4], replay_buffer[last_element][5]
 
@@ -83,35 +90,12 @@ def train(base_model, target_network, replay_buffer, activate_ER, activate_TN):
         q_bellman_list.append(q_bellman)
     
     if activate_ER:
-        base_model.fit(x=np.array(observation_list), y=np.array(q_bellman_list), batch_size=BATCH_SIZE)
+        base_model.fit(x=np.array(observation_list), y=np.array(q_bellman_list), batch_size=BATCH_SIZE, verbose=0)
     else:
-        base_model.fit(x=np.array(observation_list), y=np.array(q_bellman_list))
-
-    
-def trainOriginal(replay_buffer):
-    # take the last saved episode with [-1]
-    observation = replay_buffer[-1][0]
-    new_observation = replay_buffer[-1][3]
-
-    predicted_q_values = base_model.predict(observation.reshape((1, 4)))  # Q(S_t)
-    new_predicted_q_values = base_model.predict(new_observation.reshape((1, 4)))  # Q(S_t+1)
-
-    action = replay_buffer[-1][1]
-    reward = replay_buffer[-1][2]
-    terminated, truncated = replay_buffer[-1][4], replay_buffer[-1][5]
-
-    # update model weights
-    if not terminated and not truncated:
-        q_bellman = predicted_q_values - learning_rate * (predicted_q_values - reward - gamma * max(new_predicted_q_values))
-    else:
-        q_bellman = predicted_q_values - learning_rate * (predicted_q_values - reward)
-
-    q_bellman[0][1-action] = predicted_q_values[0][1-action]  # [0] comes from the fact that these two are arrays
-
-    base_model.fit(x=observation.reshape(1, 4), y=q_bellman)
+        base_model.fit(x=np.array(observation_list), y=np.array(q_bellman_list), verbose=0)
 
 
-def main(base_model, target_network, num_episodes, initial_exploration, final_exploration, decay_constant, activate_TN, activate_ER):
+def main(base_model, target_network, num_episodes, initial_exploration, final_exploration, decay_constant, activate_TN, activate_ER, learning_rate):
     env = gym.make('CartPole-v1', render_mode='human')
 
     episode_lengths = []
@@ -156,9 +140,9 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
             if activate_TN:
                 steps_TN += 1
                 if current_episode_length % 4 == 0 or truncated or terminated:
-                    train(base_model=base_model, target_network=target_network, replay_buffer=replay_buffer, activate_ER=activate_ER)
+                    train(base_model=base_model, target_network=target_network, replay_buffer=replay_buffer, activate_ER=activate_ER, activate_TN=activate_TN, learning_rate=learning_rate)
             else:
-                train(base_model=base_model, target_network=target_network, replay_buffer=replay_buffer, activate_ER=activate_ER)
+                train(base_model=base_model, target_network=target_network, replay_buffer=replay_buffer, activate_ER=activate_ER, activate_TN=activate_TN, learning_rate=learning_rate)
 
             # roll over
             observation = new_observation
@@ -181,18 +165,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
 
 
 
-def run_and_plot(num_episodes, activate_TN, activate_ER):
-    env = gym.make('CartPole-v1', render_mode='human')
 
-    # main DQN model (not target network)
-    base_model = initialize_model(learning_rate=learning_rate)
-
-    if activate_TN:
-        target_network = initialize_model(learning_rate=learning_rate)
-        update_freq_TN = 100  # steps
-
-    episode_lengths = main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, activate_TN=activate_TN, activate_ER=activate_ER)
-    plot_episode_length(episode_lengths, f'TR {activate_TN}, ER {activate_ER}')
 
 
 if __name__ == '__main__':
@@ -228,10 +201,6 @@ if __name__ == '__main__':
         update_freq_TN = 100  # steps
 
 
-    run_and_plot(num_episodes=400, activate_ER=True, activate_TN=True)
-    run_and_plot(num_episodes=400, activate_ER=False, activate_TN=True)
-    run_and_plot(num_episodes=400, activate_ER=True, activate_TN=False)
-    run_and_plot(num_episodes=400, activate_ER=False, activate_TN=False)
 
 
     end = time.time()
