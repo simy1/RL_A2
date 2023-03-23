@@ -31,7 +31,7 @@ def printNotAcceptedCMD(error_msg):
     print('$ python dqn.py --experience_replay --target_network')
 
 
-def exponential_anneal(t,start,final,decay_constant):
+def exponential_anneal(t, start, final, decay_constant):
     ''' Linear annealing scheduler
     t: current timestep
     start: initial value

@@ -5,6 +5,7 @@ import pygame
 import tensorflow as tf
 from collections import deque
 
+
 import visualize
 from helper import *
 import time
@@ -12,7 +13,7 @@ import random
 import matplotlib.pyplot as plt
 from visualize import plot_episode_length, average_episode_length
 
-
+max_episode_length = 150  # for hyperparameter tuning
 # next two lines can be removed after hyperparameter tuning
 update_freq_TN = 100
 gamma = 1
@@ -96,7 +97,7 @@ def train(base_model, target_network, replay_buffer, activate_ER, activate_TN, l
 
 
 def main(base_model, target_network, num_episodes, initial_exploration, final_exploration, decay_constant, activate_TN, activate_ER, learning_rate):
-    env = gym.make('CartPole-v1', render_mode='human')
+    env = gym.make('CartPole-v1') #, render_mode='human')  # TODO uncomment if you want to see the cartpole!!
 
     episode_lengths = []
     replay_buffer = deque(maxlen=10_000)
@@ -116,7 +117,10 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
         epsilon = exploration_parameter  # temporary while only using egreedy
         while not terminated and not truncated:
             current_episode_length += 1
-            env.render()
+
+
+            # env.render()  # uncomment after hyperparameter tuning
+
 
             # let the main model predict the Q values based on the observation of the environment state
             # these are Q(S_t)
@@ -147,7 +151,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
             # roll over
             observation = new_observation
 
-            if terminated or truncated:
+            if terminated or truncated or current_episode_length > max_episode_length:
                 episode_lengths.append(current_episode_length)
                 current_episode_length = 0
                 observation, info = env.reset()

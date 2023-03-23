@@ -5,7 +5,6 @@ import tensorflow as tf
 import csv
 
 import main
-import main_ER
 import helper
 import main_ER
 
@@ -41,7 +40,7 @@ def plot_episode_length(episode_lengths, experiment_label):
     # plt.show()
 
 
-def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, num_independent_runs=5):
+def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, num_independent_runs=2):
     #env = gym.make('CartPole-v1', render_mode='human')
 
     colours = ['chocolate', 'slateblue', 'lime', 'orange', 'forestgreen']
@@ -61,7 +60,8 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
         episode_lengths = main_ER.main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate)
 
         average_ep_length = average_episode_length(episode_lengths)
-        mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:-50])
+        # mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:-50])
+        mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:5])
         plt.scatter(range(len(episode_lengths)), episode_lengths, label='episode length', color=colours[run])
         plt.plot(range(len(episode_lengths)), average_ep_length, label='average episode length', color=colours[run])
 
@@ -78,24 +78,24 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
 
 
 if __name__ == '__main__':
-    env = gym.make('CartPole-v1', render_mode='human')
+    # env = gym.make('CartPole-v1', render_mode='human')
 
     gamma = 1  # discount factor
     initial_epsilon = 1  # 100%
     final_epsilon = 0.01  # 1%
-    num_episodes = 500
+    num_episodes = 300
 
     # learning_rates = [0.01, 0.03, 0.1, 0.3]
     learning_rates = [0.01, 0.1]
     decay_constants = [0.001, 0.1]
     loss_functions = [tf.keras.losses.MeanSquaredError(), tf.keras.losses.Huber()]
-    kernel_initialization = ['glorot_uniform', 'random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
+    # kernel_initialization = ['glorot_uniform', 'random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
+    kernel_initialization = ['random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
     activation_functions = ['relu', 'tanh']
     # activate_TN_options = [True, False]
     activate_TN_options = [True]
     # activate_ER_options = [True, False]
     activate_ER_options = [True]
-
 
 
     experiment_details = {}
@@ -112,26 +112,29 @@ if __name__ == '__main__':
                             # store all options in dictionary so we can start from another point later
                             experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
 
-
+    print(len(experiment_details))
 
     # increase if you want to continue from a later experiment
-    experiment_number = 1
+    experiment_number = 1  # to start from
+    num_experiments = len(experiment_details)
 
-    with open('experiment_specs.txt', mode='a', newline='') as file:
+    for _ in range(num_experiments):
+        print(f'-----Experiment {experiment_number}-----')
 
-        writer = csv.writer(file, delimiter=',')
+        with open('experiment_specs.txt', mode='a', newline='') as file:
+            writer = csv.writer(file, delimiter=',')
 
-        if experiment_number == 1:
-            writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization'])
+            if experiment_number == 1:
+                writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization'])
 
-
-        while experiment_number <= len(experiment_details):
-            print(f'-----Experiment {experiment_number}-----')
 
             learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER = experiment_details[experiment_number]
 
-            mean_ep_length_last_fifty_runs = test_hyperparams(num_episodes=num_episodes, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate, initial_epsilon=initial_epsilon, final_epsilon=final_epsilon, decay_constant=decay_constant, experiment_label=experiment_number)
+            try:
+                mean_ep_length_last_fifty_runs = test_hyperparams(num_episodes=num_episodes, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate, initial_epsilon=initial_epsilon, final_epsilon=final_epsilon, decay_constant=decay_constant, experiment_label=experiment_number)
 
-            writer.writerow([experiment_number, mean_ep_length_last_fifty_runs, num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization])
+                writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization])
+            except Exception:
+                writer.writerow([experiment_number, 'run failed'])
 
             experiment_number += 1
