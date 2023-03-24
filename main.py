@@ -1,4 +1,5 @@
-import gymnasium as gym
+# import gymnasium as gym
+import gym
 import numpy as np
 import pygame
 import tensorflow as tf
@@ -120,5 +121,5 @@ def train(replay_buffer, base_model, learning_rate):
 if __name__ == '__main__':
 
     model = initialize_model(learning_rate=learning_rate)
-    main(base_model=model, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant)
+    main(base_model=model, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate)
 
