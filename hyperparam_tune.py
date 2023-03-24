@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import gymnasium as gym
+# import gymnasium as gym
+import gym
 import tensorflow as tf
 import csv
+import time
+from tqdm import tqdm
 
-import main
+# import main
 import helper
 import main_ER
 
@@ -121,14 +124,10 @@ if __name__ == '__main__':
                             # store all options in dictionary so we can start from another point later
                             experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
 
-    print(len(experiment_details))
 
-    # increase if you want to continue from a later experiment
-    experiment_number = 1  # to start from
-    num_experiments = 10
-
-    for _ in range(num_experiments):
+    for experiment_number in tqdm(range(1,len(experiment_details)+1)):
         print(f'-----Experiment {experiment_number}-----')
+        start = time.time()
 
         with open('experiment_specs.txt', mode='a', newline='') as file:
             writer = csv.writer(file, delimiter=',')
@@ -140,10 +139,18 @@ if __name__ == '__main__':
             learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER = experiment_details[experiment_number]
 
             try:
-                mean_ep_length_last_fifty_runs = test_hyperparams(num_episodes=num_episodes, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate, initial_epsilon=initial_epsilon, final_epsilon=final_epsilon, decay_constant=decay_constant, experiment_label=experiment_number)
+                mean_ep_length_last_fifty_runs = test_hyperparams(num_episodes=num_episodes, 
+                                                                  activate_TN=activate_TN, 
+                                                                  activate_ER=activate_ER, 
+                                                                  learning_rate=learning_rate, 
+                                                                  initial_epsilon=initial_epsilon, 
+                                                                  final_epsilon=final_epsilon, 
+                                                                  decay_constant=decay_constant, 
+                                                                  experiment_label=experiment_number)
 
                 writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization])
             except Exception:
                 writer.writerow([experiment_number, 'run failed'])
-
-            experiment_number += 1
+        
+        end = time.time()
+        print('Total time: {} seconds (experiment_number: {})'.format(end-start, experiment_number))
