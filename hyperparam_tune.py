@@ -40,7 +40,7 @@ def plot_episode_length(episode_lengths, experiment_label):
     # plt.show()
 
 
-def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, num_independent_runs=2):
+def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, num_independent_runs=1):
     #env = gym.make('CartPole-v1', render_mode='human')
 
     colours = ['chocolate', 'slateblue', 'lime', 'orange', 'forestgreen']
@@ -83,18 +83,27 @@ if __name__ == '__main__':
     gamma = 1  # discount factor
     initial_epsilon = 1  # 100%
     final_epsilon = 0.01  # 1%
-    num_episodes = 300
+    num_episodes = 1000
 
-    # learning_rates = [0.01, 0.03, 0.1, 0.3]
-    learning_rates = [0.01, 0.1]
-    decay_constants = [0.001, 0.1]
-    loss_functions = [tf.keras.losses.MeanSquaredError(), tf.keras.losses.Huber()]
-    # kernel_initialization = ['glorot_uniform', 'random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
-    kernel_initialization = ['random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
-    activation_functions = ['relu', 'tanh']
-    # activate_TN_options = [True, False]
+    # # learning_rates = [0.01, 0.03, 0.1, 0.3]
+    # learning_rates = [0.01, 0.1]
+    # decay_constants = [0.001, 0.1]
+    # loss_functions = [tf.keras.losses.MeanSquaredError(), tf.keras.losses.Huber()]
+    # # kernel_initialization = ['glorot_uniform', 'random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
+    # kernel_initialization = ['random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
+    # activation_functions = ['relu', 'tanh']
+    # # activate_TN_options = [True, False]
+    # activate_TN_options = [True]
+    # # activate_ER_options = [True, False]
+    # activate_ER_options = [True]    # learning_rates = [0.01, 0.03, 0.1, 0.3]
+
+
+    learning_rates = [0.1, 0.01, 0.001]
+    decay_constants = [0.01, 0.1]
+    loss_functions = [tf.keras.losses.Huber()]
+    kernel_initialization = [tf.keras.initializers.HeUniform()]
+    activation_functions = ['relu']
     activate_TN_options = [True]
-    # activate_ER_options = [True, False]
     activate_ER_options = [True]
 
 
@@ -116,7 +125,7 @@ if __name__ == '__main__':
 
     # increase if you want to continue from a later experiment
     experiment_number = 1  # to start from
-    num_experiments = len(experiment_details)
+    num_experiments = 10
 
     for _ in range(num_experiments):
         print(f'-----Experiment {experiment_number}-----')

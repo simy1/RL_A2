@@ -13,7 +13,7 @@ import random
 import matplotlib.pyplot as plt
 from visualize import plot_episode_length, average_episode_length
 
-max_episode_length = 150  # for hyperparameter tuning
+
 # next two lines can be removed after hyperparameter tuning
 update_freq_TN = 100
 gamma = 1
@@ -151,7 +151,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
             # roll over
             observation = new_observation
 
-            if terminated or truncated or current_episode_length > max_episode_length:
+            if terminated or truncated:
                 episode_lengths.append(current_episode_length)
                 current_episode_length = 0
                 observation, info = env.reset()
