@@ -68,6 +68,12 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
         plt.scatter(range(len(episode_lengths)), episode_lengths, label='episode length', color=colours[run])
         plt.plot(range(len(episode_lengths)), average_ep_length, label='average episode length', color=colours[run])
 
+        # extra code - back up results in dictionaries
+        central_path = helper.make_central_directory()
+        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+        helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths)
+
+
     plt.title(f'experiment {experiment_label}')
     plt.xlabel('Episode')
     plt.ylabel('Episode Length')
@@ -86,7 +92,7 @@ if __name__ == '__main__':
     gamma = 1  # discount factor
     initial_epsilon = 1  # 100%
     final_epsilon = 0.01  # 1%
-    num_episodes = 1000
+    num_episodes = 500
 
     # # learning_rates = [0.01, 0.03, 0.1, 0.3]
     # learning_rates = [0.01, 0.1]
@@ -149,7 +155,8 @@ if __name__ == '__main__':
                                                                   experiment_label=experiment_number)
 
                 writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization])
-            except Exception:
+            except Exception as error:
+                print('>>>>>>> special error:',error)
                 writer.writerow([experiment_number, 'run failed'])
         
         end = time.time()
