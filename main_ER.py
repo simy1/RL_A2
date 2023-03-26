@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import tensorflow as tf
 from collections import deque
+from tqdm import tqdm
 
 
 import visualize
@@ -110,7 +111,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
 
     observation, info = env.reset()
 
-    for episode in range(num_episodes):
+    for episode in tqdm(range(num_episodes)):
         terminated, truncated = False, False
         # annealing, done before the while loop because the first episode equals 0 so it returns the original epsilon back
         exploration_parameter = exponential_anneal(episode, initial_exploration, final_exploration, decay_constant)

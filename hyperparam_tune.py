@@ -6,6 +6,7 @@ import tensorflow as tf
 import csv
 import time
 from tqdm import tqdm
+import sys
 
 # import main
 import helper
@@ -52,8 +53,10 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
     # main DQN model (not target network)
     base_model = main_ER.initialize_model(learning_rate=learning_rate)
 
+    # put it outside of the if because an error occurs "local variable 'target_network' referenced before assignment"
+    # which means that we cannot call target in mainER.main without knowing the variable
+    target_network = main_ER.initialize_model(learning_rate=learning_rate)
     if activate_TN:
-        target_network = main_ER.initialize_model(learning_rate=learning_rate)
         update_freq_TN = 100  # steps
 
 
@@ -113,7 +116,7 @@ if __name__ == '__main__':
     kernel_initialization = [tf.keras.initializers.HeUniform()]
     activation_functions = ['relu']
     activate_TN_options = [True]
-    activate_ER_options = [True]
+    activate_ER_options = [False]
 
 
     experiment_details = {}
@@ -131,7 +134,10 @@ if __name__ == '__main__':
                             experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
 
 
-    for experiment_number in tqdm(range(1,len(experiment_details)+1)):
+    start = (int)(sys.argv[1])      #1
+    end = start+1                   #len(experiment_details)+1
+    for experiment_number in tqdm(range(start,end)):
+        time.sleep(120)
         print(f'-----Experiment {experiment_number}-----')
         start = time.time()
 
