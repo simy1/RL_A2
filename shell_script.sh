@@ -1,6 +1,6 @@
 #!/bin/bash
 # pyenv shell 3.8.0
-for i in {1..6}
+for i in {1..9}
 do
     echo ">>> Shell script here <<<"
     echo ">>> starting a new experiment: $i <<<"
