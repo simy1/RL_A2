@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
 
     learning_rates = [0.1, 0.01, 0.001]
-    decay_constants = [0.01, 0.1]
+    decay_constants = [0.1, 0.01, 0.001]
     loss_functions = [tf.keras.losses.Huber()]
     kernel_initialization = [tf.keras.initializers.HeUniform()]
     activation_functions = ['relu']
