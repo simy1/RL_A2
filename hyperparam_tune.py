@@ -7,6 +7,7 @@ import csv
 import time
 from tqdm import tqdm
 import sys
+import os
 
 # import main
 import helper
@@ -44,7 +45,7 @@ def plot_episode_length(episode_lengths, experiment_label):
     # plt.show()
 
 
-def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, num_independent_runs=1):
+def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, repetition=1):
     #env = gym.make('CartPole-v1', render_mode='human')
 
     colours = ['chocolate', 'slateblue', 'lime', 'orange', 'forestgreen']
@@ -60,31 +61,31 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
         update_freq_TN = 100  # steps
 
 
-    plt.figure(figsize=(15, 6))
-    for run in range(num_independent_runs):
-        print(f'run {run}')
-        episode_lengths = main_ER.main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate)
+    # plt.figure(figsize=(15, 6))
+    # for run in range(num_independent_runs):
+    print(f'run {repetition}')
+    episode_lengths = main_ER.main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate)
 
-        average_ep_length = average_episode_length(episode_lengths)
-        # mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:-50])
-        mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:5])
-        plt.scatter(range(len(episode_lengths)), episode_lengths, label='episode length', color=colours[run])
-        plt.plot(range(len(episode_lengths)), average_ep_length, label='average episode length', color=colours[run])
+    average_ep_length = average_episode_length(episode_lengths)
+    # mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:-50])
+    mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:5])
+    # plt.scatter(range(len(episode_lengths)), episode_lengths, label='episode length', color=colours[1])
+    # plt.plot(range(len(episode_lengths)), average_ep_length, label='average episode length', color=colours[1])
 
-        # extra code - back up results in dictionaries
-        central_path = helper.make_central_directory()
-        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
-        helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths)
+    # extra code - back up results in dictionaries
+    central_path = helper.make_central_directory()
+    dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+    helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
 
 
-    plt.title(f'experiment {experiment_label}')
-    plt.xlabel('Episode')
-    plt.ylabel('Episode Length')
-    plt.legend(bbox_to_anchor=(1, 1))
-    plt.tight_layout()
-    plt.savefig(f'figure {experiment_label}')
+    # plt.title(f'experiment {experiment_label}')
+    # plt.xlabel('Episode')
+    # plt.ylabel('Episode Length')
+    # plt.legend(bbox_to_anchor=(1, 1))
+    # plt.tight_layout()
+    # plt.savefig(f'figure {experiment_label}')
 
-    return mean_ep_length_last_fifty_runs/num_independent_runs
+    return mean_ep_length_last_fifty_runs
 
 
 
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     kernel_initialization = [tf.keras.initializers.HeUniform()]
     activation_functions = ['relu']
     activate_TN_options = [True]
-    activate_ER_options = [False]
+    activate_ER_options = [True]
 
 
     experiment_details = {}
@@ -134,18 +135,19 @@ if __name__ == '__main__':
                             experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
 
 
-    start = (int)(sys.argv[1])      #1
-    end = start+1                   #len(experiment_details)+1
+    start = (int)(sys.argv[1])      # 1
+    end = start+1                   # len(experiment_details)+1
+    repetition = (int)(sys.argv[2]) # number of independent experiment / repetition 
     for experiment_number in tqdm(range(start,end)):
         time.sleep(120)
         print(f'-----Experiment {experiment_number}-----')
         start = time.time()
 
-        with open('experiment_specs.txt', mode='a', newline='') as file:
+        with open('epxeriment_specs.txt', mode='a', newline='') as file:
             writer = csv.writer(file, delimiter=',')
 
             if experiment_number == 1:
-                writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization'])
+                writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization', 'repetition'])
 
 
             learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER = experiment_details[experiment_number]
@@ -158,9 +160,10 @@ if __name__ == '__main__':
                                                                   initial_epsilon=initial_epsilon, 
                                                                   final_epsilon=final_epsilon, 
                                                                   decay_constant=decay_constant, 
-                                                                  experiment_label=experiment_number)
+                                                                  experiment_label=experiment_number,
+                                                                  repetition=repetition)
 
-                writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization])
+                writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization, repetition])
             except Exception as error:
                 print('>>>>>>> special error:',error)
                 writer.writerow([experiment_number, 'run failed'])

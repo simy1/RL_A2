@@ -76,7 +76,7 @@ def make_DQN_directory(central_path, activate_TN, activate_ER):
     return dqn_version_path
 
 
-def store_results_to_file(dqn_version_path,initial_exploration, final_exploration, decay_constant, learning_rate, experiment_label, episode_lengths):
+def store_results_to_file(dqn_version_path,initial_exploration, final_exploration, decay_constant, learning_rate, experiment_label, episode_lengths, repetition):
     '''
     Make a dictionary for the results obtained and store them to the file.
     '''
@@ -85,7 +85,7 @@ def store_results_to_file(dqn_version_path,initial_exploration, final_exploratio
     run_details_dict[key] = episode_lengths
 
     # store the dictionary to a pickle file
-    name = dqn_version_path + '/combination_' + str(experiment_label) + '.pkl'
+    name = dqn_version_path + '/combination_' + str(experiment_label) + '__repetition_' + str(repetition) + '.pkl'
     a_file = open(name, "wb")
     pickle.dump(run_details_dict,a_file,pickle.HIGHEST_PROTOCOL)
     a_file.close()

@@ -58,23 +58,29 @@ def smooth(y, window, poly=1):
 
 if __name__ == '__main__':
     print('vizualizing results (using the code given in the assignment 1)')
-    smoothing_window = 5
+    smoothing_window = 10
+    reps = 10
 
-    for experiment_num in range(1,6+1):
+    for experiment_num in range(1,9+1):
         Plot = LearningCurvePlot() 
         for dqn_version in ['DQN','DQN-TN','DQN-ER','DQN-TN-ER']:
-            # learning curve: actual data
-            name = 'C:/Users/User/Documents/GitHub/RL_A2/RL-as2-details4runs/' + dqn_version + '/combination_' + str(experiment_num) + '.pkl'
-            a_file = open(name, "rb")
-            x_dict = pickle.load(a_file)
-            # print('keys:',x_dict.keys())
-            # print('values:',x_dict[list(x_dict.keys())[0]])
-            title = x_dict.keys()
-            Plot.ax.set_title(str(title),fontsize = 8)
-            learning_curve = x_dict[list(x_dict.keys())[0]]
+            learning_curve_over_reps = list()
+            for rep in range(1,reps+1):
+                # learning curve: actual data
+                name = 'C:/Users/User/Documents/GitHub/RL_A2/RL-as2-details4runs/' + dqn_version + '/combination_' + str(experiment_num) + '__repetition_' + str(rep) + '.pkl'
+                a_file = open(name, "rb")
+                x_dict = pickle.load(a_file)
+                # print('keys:',x_dict.keys())
+                # print('values:',x_dict[list(x_dict.keys())[0]])
+                title = x_dict.keys()
+                Plot.ax.set_title(str(title),fontsize = 8)
+                results = x_dict[list(x_dict.keys())[0]]
+                a_file.close()
+                learning_curve_over_reps.append(results)
+            learning_curve = np.mean(learning_curve_over_reps,axis=0) # average over repetitions
             learning_curve = smooth(learning_curve,smoothing_window)
             Plot.add_curve(learning_curve,label=r'{}'.format(dqn_version))
-            a_file.close()
+            
 
         filename = 'test' + str(experiment_num) +  '_smooth_win' + str(smoothing_window) + '.png'
         Plot.save(filename)
