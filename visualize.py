@@ -59,11 +59,11 @@ def smooth(y, window, poly=1):
 if __name__ == '__main__':
     print('vizualizing results (using the code given in the assignment 1)')
     smoothing_window = 10
-    reps = 10
+    reps = 3
 
     for experiment_num in range(1,9+1):
         Plot = LearningCurvePlot() 
-        for dqn_version in ['DQN','DQN-TN','DQN-ER','DQN-TN-ER']:
+        for dqn_version in ['DQN-TN-ER']: #for dqn_version in ['DQN','DQN-TN','DQN-ER','DQN-TN-ER']:
             learning_curve_over_reps = list()
             for rep in range(1,reps+1):
                 # learning curve: actual data
