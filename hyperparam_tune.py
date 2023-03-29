@@ -75,7 +75,7 @@ def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, init
     # extra code - back up results in dictionaries
     central_path = helper.make_central_directory()
     dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
-    helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
+    helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label+10, episode_lengths=episode_lengths, repetition=repetition)
 
 
     # plt.title(f'experiment {experiment_label}')
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 
     learning_rates = [0.1, 0.01, 0.001]
-    decay_constants = [0.1, 0.01, 0.001]
+    decay_constants = [0.99] # [0.1, 0.01, 0.001]
     loss_functions = [tf.keras.losses.Huber()]
     kernel_initialization = [tf.keras.initializers.HeUniform()]
     activation_functions = ['relu']
@@ -135,19 +135,21 @@ if __name__ == '__main__':
                             experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
 
 
-    start = (int)(sys.argv[1])      # 1
+    # start = (int)(sys.argv[1])      # 1
+    start = (int)(sys.argv[1]) - 10
+    script_num = (int)(sys.argv[1])
     end = start+1                   # len(experiment_details)+1
     repetition = (int)(sys.argv[2]) # number of independent experiment / repetition 
     for experiment_number in tqdm(range(start,end)):
         time.sleep(120)
-        print(f'-----Experiment {experiment_number}-----')
+        print(f'-----Experiment {experiment_number+10}-----')
         start = time.time()
 
         with open('epxeriment_specs.txt', mode='a', newline='') as file:
             writer = csv.writer(file, delimiter=',')
 
-            if experiment_number == 1:
-                writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization', 'repetition'])
+            # if experiment_number == 1:
+            #     writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization', 'repetition'])
 
 
             learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER = experiment_details[experiment_number]
@@ -163,10 +165,10 @@ if __name__ == '__main__':
                                                                   experiment_label=experiment_number,
                                                                   repetition=repetition)
 
-                writer.writerow([experiment_number, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization, repetition])
+                writer.writerow([experiment_number+10, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization, repetition])
             except Exception as error:
                 print('>>>>>>> special error:',error)
-                writer.writerow([experiment_number, 'run failed'])
+                writer.writerow([experiment_number+10, 'run failed'])
         
         end = time.time()
-        print('Total time: {} seconds (experiment_number: {})'.format(end-start, experiment_number))
+        print('Total time: {} seconds (experiment_number: {})'.format(end-start, experiment_number+10))

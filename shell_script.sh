@@ -1,8 +1,8 @@
 #!/bin/bash
 # pyenv shell 3.8.0
-for j in {1..3}
+for j in 1 # {1..3}
 do 
-	for i in {1..9}
+	for i in {10..12} #{1..9}
 	do 
 		echo ">>> Shell script here <<<"
 		echo ">>> Starting a new experiment: $i - repetition $j <<<"
