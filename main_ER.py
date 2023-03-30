@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import tensorflow as tf
 from collections import deque
+from tqdm import tqdm
 
 
 import visualize
@@ -75,11 +76,11 @@ def train(base_model, target_network, replay_buffer, activate_ER, activate_TN, l
         terminated_list.append(replay_buffer[element][4])
         truncated_list.append(replay_buffer[element][5])
 
-    predicted_q_values = base_model.predict(np.array(observation_list))
+    predicted_q_values = base_model.predict(np.array(observation_list),verbose=0)
     if activate_TN:
-        new_predicted_q_values = target_network.predict(np.array(new_observation_list))
+        new_predicted_q_values = target_network.predict(np.array(new_observation_list),verbose=0)
     else:
-        new_predicted_q_values = base_model.predict(np.array(new_observation_list))
+        new_predicted_q_values = base_model.predict(np.array(new_observation_list),verbose=0)
 
     q_bellman_list = list()
     for i in range(len(observation_list)):
@@ -110,7 +111,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
 
     observation, info = env.reset()
 
-    for episode in range(num_episodes):
+    for episode in tqdm(range(num_episodes)):
         terminated, truncated = False, False
         # annealing, done before the while loop because the first episode equals 0 so it returns the original epsilon back
         exploration_parameter = exponential_anneal(episode, initial_exploration, final_exploration, decay_constant)
@@ -124,7 +125,7 @@ def main(base_model, target_network, num_episodes, initial_exploration, final_ex
 
             # let the main model predict the Q values based on the observation of the environment state
             # these are Q(S_t)
-            predicted_q_values = base_model.predict(observation.reshape((1, 4)))
+            predicted_q_values = base_model.predict(observation.reshape((1, 4)),verbose=0)
 
             # choose an action
             if np.random.random() < epsilon:

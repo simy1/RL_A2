@@ -1,0 +1,30 @@
+experiment_number,mean_ep_length_last_fifty_runs,num_episodes,activate_TN,activate_ER,learning_rate,decay_constant,activation_func,initialization,repetition
+1,14.517,500,True,True,0.1,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001FBE547A430>,1
+2,15.41,500,True,True,0.1,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000018953D2A430>,1
+3,22.337,500,True,True,0.1,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000013E8924A430>,1
+4,18.57,500,True,True,0.01,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000002BBB739A430>,1
+5,18.82,500,True,True,0.01,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001E300B0A430>,1
+6,28.96,500,True,True,0.01,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001EE2D4CA430>,1
+7,20.233,500,True,True,0.001,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x00000216D072A430>,1
+8,16.837,500,True,True,0.001,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000002024EACA430>,1
+9,22.09,500,True,True,0.001,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000002AC5DFAA430>,1
+experiment_number,mean_ep_length_last_fifty_runs,num_episodes,activate_TN,activate_ER,learning_rate,decay_constant,activation_func,initialization,repetition
+1,17.937,500,True,True,0.1,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000023A2DE9A430>,2
+2,14.863,500,True,True,0.1,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001AF55F49430>,2
+3,26.5,500,True,True,0.1,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001741635A430>,2
+4,20.057,500,True,True,0.01,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000020D8686A430>,2
+5,19.493,500,True,True,0.01,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001475E6EA430>,2
+6,34.057,500,True,True,0.01,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x00000200B0F2A430>,2
+7,19.487,500,True,True,0.001,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001C5260FA430>,2
+8,29.027,500,True,True,0.001,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000021D98C4A430>,2
+9,18.23,500,True,True,0.001,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000025DD032A430>,2
+experiment_number,mean_ep_length_last_fifty_runs,num_episodes,activate_TN,activate_ER,learning_rate,decay_constant,activation_func,initialization,repetition
+1,29.303,500,True,True,0.1,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000016ADA18A430>,3
+2,24.127,500,True,True,0.1,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000020F0CF7A430>,3
+3,27.717,500,True,True,0.1,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x0000023E570EA430>,3
+4,25.193,500,True,True,0.01,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001D17B309430>,3
+5,22.62,500,True,True,0.01,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x00000249C3F2A430>,3
+6,21.03,500,True,True,0.01,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001CFAAFFA430>,3
+7,19.383,500,True,True,0.001,0.1,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001F757E6A430>,3
+8,23.09,500,True,True,0.001,0.01,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001D9B9E0A430>,3
+9,40.697,500,True,True,0.001,0.001,relu,<keras.initializers.initializers_v2.HeUniform object at 0x000001E73D12A430>,3
