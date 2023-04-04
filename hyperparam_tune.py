@@ -3,172 +3,147 @@ import matplotlib.pyplot as plt
 # import gymnasium as gym
 import gym
 import tensorflow as tf
-import csv
 import time
 from tqdm import tqdm
 import sys
 import os
 
-# import main
 import helper
-import main_ER
+import dqn
+import visualize
 
 
-def initialize_modelA(learning_rate, initialization, activation_func):
+def initialize_modelA(learning_rate, loss_init, neuron_layers):
+    '''
+    Build the model. It is a simple Neural Network consisting of 3 densely connected layers with Relu activation functions.
+    Tune four parameters of the model (learning rate, loss function, initialization function and neurons in each layer).
+    '''
     model = tf.keras.models.Sequential([
-      tf.keras.layers.Dense(24, activation=activation_func, input_shape=(4,), kernel_initializer=initialization),
-      tf.keras.layers.Dense(12, activation=activation_func, kernel_initializer=initialization),
-      tf.keras.layers.Dense(2, activation='linear', kernel_initializer=initialization)
+      tf.keras.layers.Dense(neuron_layers[0], activation='relu', input_shape=(4,), kernel_initializer=loss_init[1]),
+      tf.keras.layers.Dense(neuron_layers[1], activation='relu', kernel_initializer=loss_init[1]),
+      tf.keras.layers.Dense(2, activation='linear', kernel_initializer=loss_init[1])
     ])
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  loss='mse',
+                  loss=loss_init[0],
                   metrics=['accuracy'])
     return model
 
 
-def average_episode_length(episode_lengths):
-    episode_lengths = np.array(episode_lengths)
-    return np.cumsum(episode_lengths) / np.arange(1, len(episode_lengths)+1)
-
-
-def plot_episode_length(episode_lengths, experiment_label):
-    episode_lengths = np.array(episode_lengths)
-
-    plt.scatter(range(len(episode_lengths)), episode_lengths, color='navy', label='episode length')
-
-    average_ep_length = average_episode_length(episode_lengths)
-    plt.plot(range(len(episode_lengths)), average_ep_length, color='chocolate', label='average episode length')
-    plt.legend(bbox_to_anchor=(1, 1))
-    plt.title(f'experiment {experiment_label}')
-    plt.tight_layout()
-    plt.savefig(experiment_label)
-    # plt.show()
-
-
-def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, experiment_label=0, repetition=1):
-    #env = gym.make('CartPole-v1', render_mode='human')
-
+def test_hyperparams(num_episodes, activate_TN, activate_ER, learning_rate, initial_epsilon, final_epsilon, decay_constant, temperature, experiment_label=0, repetition=1, neurons_layers=[24,12], loss_init=[tf.keras.losses.Huber(),tf.keras.initializers.HeUniform()], exploration_strategy='epsilon_greedy_annealing'):
+    '''
+    Takes a certain combination of hyperparameters and run the model by calling the mainDQN.main.
+    Finally, it stores the results for the specific repetition at a certain directory (actually two directories are used). 
+    '''
     colours = ['chocolate', 'slateblue', 'lime', 'orange', 'forestgreen']
     mean_ep_length_last_fifty_runs = 0
 
-    # main DQN model (not target network)
-    base_model = main_ER.initialize_model(learning_rate=learning_rate)
+    base_model = initialize_modelA(learning_rate=learning_rate, loss_init=loss_init, neuron_layers=neurons_layers)
 
-    # put it outside of the if because an error occurs "local variable 'target_network' referenced before assignment"
-    # which means that we cannot call target in mainER.main without knowing the variable
-    target_network = main_ER.initialize_model(learning_rate=learning_rate)
+    target_network = initialize_modelA(learning_rate=learning_rate, loss_init=loss_init, neuron_layers=neurons_layers)
     if activate_TN:
         update_freq_TN = 100  # steps
 
-
-    # plt.figure(figsize=(15, 6))
-    # for run in range(num_independent_runs):
     print(f'run {repetition}')
-    episode_lengths = main_ER.main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, activate_TN=activate_TN, activate_ER=activate_ER, learning_rate=learning_rate)
+    episode_lengths = dqn.main(base_model=base_model, target_network=target_network, num_episodes=num_episodes, initial_exploration=initial_epsilon, final_exploration=final_epsilon, learning_rate=learning_rate, decay_constant=decay_constant, temperature=temperature, activate_TN=activate_TN, activate_ER=activate_ER, exploration_strategy='anneal_epsilon_greedy')
 
-    average_ep_length = average_episode_length(episode_lengths)
-    # mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:-50])
+    average_ep_length = visualize.average_episode_length(episode_lengths)
     mean_ep_length_last_fifty_runs += np.mean(average_ep_length[:5])
-    # plt.scatter(range(len(episode_lengths)), episode_lengths, label='episode length', color=colours[1])
-    # plt.plot(range(len(episode_lengths)), average_ep_length, label='average episode length', color=colours[1])
 
-    # extra code - back up results in dictionaries
-    central_path = helper.make_central_directory()
-    dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
-    helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label+10, episode_lengths=episode_lengths, repetition=repetition)
-
-
-    # plt.title(f'experiment {experiment_label}')
-    # plt.xlabel('Episode')
-    # plt.ylabel('Episode Length')
-    # plt.legend(bbox_to_anchor=(1, 1))
-    # plt.tight_layout()
-    # plt.savefig(f'figure {experiment_label}')
+    # back up results in dictionaries
+    if exploration_strategy == 'epsilon_greedy_annealing':
+        central_path = helper.make_central_directory('/hyperparams-tuning_annealing')
+        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+        helper.store_results_to_file(dqn_version_path=dqn_version_path,initial_exploration=initial_epsilon, final_exploration=final_epsilon, decay_constant=decay_constant, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
+        
+        central_path = helper.make_central_directory('/hyperparams-tuning_architecture')
+        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+        helper.store_results_to_file_v2(dqn_version_path=dqn_version_path, loss_init=loss_init, neurons_layers=neurons_layers, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
+    else:
+        central_path = helper.make_central_directory('/hyperparams-tuning_boltzmann')
+        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+        helper.store_results_to_file_boltzmann(dqn_version_path=dqn_version_path, temperature=temperature, learning_rate=learning_rate, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
+        
+        central_path = helper.make_central_directory('/hyperparams-tuning_architecture')
+        dqn_version_path = helper.make_DQN_directory(central_path=central_path, activate_TN=activate_TN, activate_ER=activate_ER)
+        helper.store_results_to_file_v2(dqn_version_path=dqn_version_path, loss_init=loss_init, neurons_layers=neurons_layers, experiment_label=experiment_label, episode_lengths=episode_lengths, repetition=repetition)
 
     return mean_ep_length_last_fifty_runs
 
 
-
-
 if __name__ == '__main__':
-    # env = gym.make('CartPole-v1', render_mode='human')
-
     gamma = 1  # discount factor
     initial_epsilon = 1  # 100%
     final_epsilon = 0.01  # 1%
-    num_episodes = 500
-
-    # # learning_rates = [0.01, 0.03, 0.1, 0.3]
-    # learning_rates = [0.01, 0.1]
-    # decay_constants = [0.001, 0.1]
-    # loss_functions = [tf.keras.losses.MeanSquaredError(), tf.keras.losses.Huber()]
-    # # kernel_initialization = ['glorot_uniform', 'random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
-    # kernel_initialization = ['random_normal', tf.keras.initializers.HeUniform(), tf.keras.initializers.HeNormal()]
-    # activation_functions = ['relu', 'tanh']
-    # # activate_TN_options = [True, False]
-    # activate_TN_options = [True]
-    # # activate_ER_options = [True, False]
-    # activate_ER_options = [True]    # learning_rates = [0.01, 0.03, 0.1, 0.3]
-
+    num_episodes = 300
+    total_repetitions = 3
 
     learning_rates = [0.1, 0.01, 0.001]
-    decay_constants = [0.99] # [0.1, 0.01, 0.001]
-    loss_functions = [tf.keras.losses.Huber()]
-    kernel_initialization = [tf.keras.initializers.HeUniform()]
+    decay_constants = [0.1, 0.01, 0.001, 0.99]
+    temperatures = [10**-1, 10**0, 10**1]
+    exploration_strategy = 'epsilon_greedy_annealing' # or 'boltzmann'
+    loss_init_functions = [[tf.keras.losses.Huber(),tf.keras.initializers.HeUniform()],[tf.keras.losses.MeanSquaredError(),tf.keras.initializers.GlorotUniform()]]
+    neurons_list = [[24,12],[64,128],[128,128]]
     activation_functions = ['relu']
     activate_TN_options = [True]
     activate_ER_options = [True]
 
-
     experiment_details = {}
-
     experiment_number = 0
-    for activate_TN in activate_TN_options:
-        for activate_ER in activate_ER_options:
-            for learning_rate in learning_rates:
-                for decay_constant in decay_constants:
-                    for activation_func in activation_functions:
-                        for initialization in kernel_initialization:
-                            experiment_number += 1
 
-                            # store all options in dictionary so we can start from another point later
-                            experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER)
-
-
-    # start = (int)(sys.argv[1])      # 1
-    start = (int)(sys.argv[1]) - 10
-    script_num = (int)(sys.argv[1])
-    end = start+1                   # len(experiment_details)+1
-    repetition = (int)(sys.argv[2]) # number of independent experiment / repetition 
-    for experiment_number in tqdm(range(start,end)):
-        time.sleep(120)
-        print(f'-----Experiment {experiment_number+10}-----')
-        start = time.time()
-
-        with open('epxeriment_specs.txt', mode='a', newline='') as file:
-            writer = csv.writer(file, delimiter=',')
-
-            # if experiment_number == 1:
-            #     writer.writerow(['experiment_number', 'mean_ep_length_last_fifty_runs', 'num_episodes', 'activate_TN', 'activate_ER', 'learning_rate', 'decay_constant', 'activation_func', 'initialization', 'repetition'])
+    if exploration_strategy == 'epsilon_greedy_annealing':
+        for activate_TN in activate_TN_options:
+            for activate_ER in activate_ER_options:
+                for learning_rate in learning_rates:
+                    for decay_constant in decay_constants:
+                        for activation_func in activation_functions:
+                            for loss_init in loss_init_functions:
+                                for neurons_layers in neurons_list:
+                                    experiment_number += 1
+                                    experiment_details[experiment_number] = (learning_rate, decay_constant, activation_func, loss_init, activate_TN, activate_ER, neurons_layers)
+    else:
+        for activate_TN in activate_TN_options:
+            for activate_ER in activate_ER_options:
+                for learning_rate in learning_rates:
+                    for temperature in temperatures:
+                        for activation_func in activation_functions:
+                            for loss_init in loss_init_functions:
+                                for neurons_layers in neurons_list:
+                                    experiment_number += 1
+                                    experiment_details[experiment_number] = (learning_rate, temperature, activation_func, loss_init, activate_TN, activate_ER, neurons_layers)
 
 
-            learning_rate, decay_constant, activation_func, initialization, activate_TN, activate_ER = experiment_details[experiment_number]
+    start = 1                                       # (int)(sys.argv[1])
+    end = len(experiment_details)+1                 # start+1
+    for repetition in range(1,total_repetitions+1):     # number of independent experiment / repetition (int)(sys.argv[2])
+        for experiment_number in tqdm(range(start,end)):
+            time.sleep(10)
+            print(f'-----Experiment {experiment_number}-----')
+            start = time.time()
+
+            if exploration_strategy == 'epsilon_greedy_annealing':
+                learning_rate, decay_constant, activation_func, loss_init, activate_TN, activate_ER, neurons_layers = experiment_details[experiment_number]
+                temperature = 0
+            else:
+                learning_rate, temperature, activation_func, loss_init, activate_TN, activate_ER, neurons_layers = experiment_details[experiment_number]
+                decay_constant = 0
 
             try:
                 mean_ep_length_last_fifty_runs = test_hyperparams(num_episodes=num_episodes, 
-                                                                  activate_TN=activate_TN, 
-                                                                  activate_ER=activate_ER, 
-                                                                  learning_rate=learning_rate, 
-                                                                  initial_epsilon=initial_epsilon, 
-                                                                  final_epsilon=final_epsilon, 
-                                                                  decay_constant=decay_constant, 
-                                                                  experiment_label=experiment_number,
-                                                                  repetition=repetition)
+                                                                    activate_TN=activate_TN, 
+                                                                    activate_ER=activate_ER, 
+                                                                    learning_rate=learning_rate, 
+                                                                    initial_epsilon=initial_epsilon, 
+                                                                    final_epsilon=final_epsilon, 
+                                                                    decay_constant=decay_constant,
+                                                                    temperature=temperature, 
+                                                                    experiment_label=experiment_number,
+                                                                    repetition=repetition,
+                                                                    neurons_layers = neurons_layers,
+                                                                    loss_init=loss_init,
+                                                                    exploration_strategy=exploration_strategy)
 
-                writer.writerow([experiment_number+10, np.round(mean_ep_length_last_fifty_runs, 3), num_episodes, activate_TN, activate_ER, learning_rate, decay_constant, activation_func, initialization, repetition])
             except Exception as error:
-                print('>>>>>>> special error:',error)
-                writer.writerow([experiment_number+10, 'run failed'])
-        
-        end = time.time()
-        print('Total time: {} seconds (experiment_number: {})'.format(end-start, experiment_number+10))
+                print('>>>> special error:',error)
+            
+            end = time.time()
+            print('Total time: {} seconds (experiment_number: {})'.format(end-start, experiment_number))
